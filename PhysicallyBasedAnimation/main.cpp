@@ -19,8 +19,21 @@ float last_time, present_time;
 int width = 1000;
 int height = 800;
 
+// Particles
+const int MAX_NUM_PARTICLES = 1000;
+const int NUM_COLORS = 8;
+
+particle particles[MAX_NUM_PARTICLES];
+float speed = 1;
+
+glm::vec4 colors[8] = { glm::vec4(0.0, 0.0, 0.0, 1.0), glm::vec4(1.0,0.0,0.0,1.0),
+glm::vec4(1.0, 1.0, 0.0, 1.0), glm::vec4(0.0,1.0,0.0,1.0),
+glm::vec4(0.0, 0.0, 1.0, 1.0), glm::vec4(1.0,0.0,1.0,1.0),
+glm::vec4(0.0, 1.0, 1.0, 1.0), glm::vec4(1.0,1.0,1.0,1.0) };
+
 // Physics
 bool gravity = TRUE;
+float coef = 0.8f;  // coefficient of restitution
 
 float forces(int i, int j)
 {
@@ -32,17 +45,23 @@ float forces(int i, int j)
 		return (0.0);
 }
 
-// Particles
-const int MAX_NUM_PARTICLES = 1000;
-const int NUM_COLORS = 8;
+void collision(int n)
+{
+	for (int i = 0; i < 3; i++)
+	{
+		if (particles[n].position[i] >= 1.0)
+		{
+			particles[n].velocity[i] = -coef * particles[n].velocity[i];
+			particles[n].position[i] = 1.0 - coef * (particles[n].position[i] - 1.0);
+		}
 
-particle particles[MAX_NUM_PARTICLES];
-float speed = 0.8;
-
-glm::vec4 colors[8] = { glm::vec4(0.0, 0.0, 0.0, 1.0), glm::vec4(1.0,0.0,0.0,1.0),
-						glm::vec4(1.0, 1.0, 0.0, 1.0), glm::vec4(0.0,1.0,0.0,1.0),
-						glm::vec4(0.0, 0.0, 1.0, 1.0), glm::vec4(1.0,0.0,1.0,1.0),
-						glm::vec4(0.0, 1.0, 1.0, 1.0), glm::vec4(1.0,1.0,1.0,1.0) };
+		if (particles[n].position[i] <= -1.0)
+		{
+			particles[n].velocity[i] = -coef * particles[n].velocity[i];
+			particles[n].position[i] = -1.0 - coef * (particles[n].position[i] + 1.0);
+		}
+	}
+}
 
 // Shader Functions- click on + to expand
 #pragma region SHADER_FUNCTIONS
@@ -152,7 +171,7 @@ void updateScene()
 			particles[i].velocity[j] += dt * forces(i, j) / particles[i].mass;
 		}
 
-		//collision(i);
+		collision(i);
 	}
 
 	last_time = present_time;
